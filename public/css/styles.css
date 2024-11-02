@@ -1,0 +1,116 @@
+/* Estilos globales */
+body {
+    font-family: Arial, sans-serif;
+    background: #f7f7f7;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: flex-end; /* Posiciona el contenido al final (derecha) */
+    align-items: center;
+}
+
+/* Contenedor del formulario */
+.login-container {
+    /*width: 30%;
+    background: #ffffff;
+    padding: 40px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    margin-right: 5%;*/
+    width: 30%;
+    background: #f7f7f7; /* Color de fondo más claro */
+    padding: 40px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    border-radius: 10px; /* Borde redondeado */
+    margin-right: 5%;
+    justify-content: center; /* Centrar verticalmente */
+    align-items: center; /* Centrar horizontalmente */
+}
+
+/* Formulario */
+.login-form {
+    /*display: flex;
+    flex-direction: column;*/
+    font-size: 18px; /* Tamaño de fuente más grande */
+    background-image: linear-gradient(to bottom, #ffffff, #f7f7f7); /* Fondo degradado */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Efecto de sombra */
+    padding: 20px;
+    border-radius: 10px; /* Borde redondeado */
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+}
+
+label {
+    font-size: 14px;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+input[type="email"], 
+input[type="password"],
+input[type="text"] {
+    padding: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 18px; /* Tamaño de fuente más grande */
+}
+
+button {
+    padding: 10px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Opciones de login */
+.login-options {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.login-options a {
+    text-decoration: none;
+    color: #007BFF;
+    font-size: 14px;
+}
+
+.login-options a:hover {
+    text-decoration: underline;
+}
+
+/* Mostrar contraseña */
+.mostrar-contraseña {
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+}
+
+.mostrar-contraseña label {
+    margin-left: 5px;
+    font-size: 14px;
+}
+
+input[type="checkbox"] {
+    margin: 0;
+}
+
+/* Clase que se aplica cuando la contraseña está visible */
+input.showing-password {
+    border: 1px solid #007BFF; /* Mantén el mismo borde cuando el tipo es 'text' */
+}
