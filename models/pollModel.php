@@ -1,66 +1,144 @@
 <?php
-/*class Encuesta
+include_once '../config/database.php';
+
+class EncuestaModel
 {
-    private $db; //Conexión a la base de datos
+    private $db;
 
-    public function __construct($db)
+    public function __construct()
     {
-        $this->db = $db;
+        global $conn;
+        $this->db = $conn;
     }
 
-    //Metodo para crear una nueva encuesta
-    public function crearEncuesta($id_encuesta, $id_usuario_creador, $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado)
+    public function crearEncuesta($titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado, $id_usuario)
     {
-        $query = "INSERT INTO encuestas (id_encuesta, id_usuario_creador, titulo, descripcion, fecha_inicio, fecha_fin, estado) VALUES (?, ?, ?, ?, ?, ?, ?)";
-        $stmt = $this->db->prepare($query); //Preparamos la consulta
-        $stmt->bind_param("ssi", $id_encuesta, $id_usuario_creador, $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado); //Enlazamos los parametros
-        $stmt->execute(); //Ejecutamos la consulta
+        $query = "INSERT INTO Encuestas (titulo, descripcion, fecha_inicio, fecha_fin, estado, id_usuario) VALUES (?, ?, ?, ?, ?, ?)";
+        $stmt = $this->db->prepare($query);
 
-        // Retornamos el ID de la encuesta creada si la inserción fue exitosa
-        return $stmt->insert_id ? $stmt->insert_id : false;
-    }
-    // Método para obtener todas las encuestas de la base de datos
-    public function obtenerEncuestas()
-    {
-        $query = "SELECT * FROM encuestas";
-        $result = $this->db->query($query); // Ejecutamos la consulta
-        return $result->fetch_all(MYSQLI_ASSOC); // Devolvemos el resultado como array asociativo
-    }
-}*/
-class Encuesta
-{
-    private $db; //Conexión a la base de datos
+        if ($stmt === false) {
+            die('Error en la preparación de la consulta: ' . $this->db->error);
+        }
 
-    public function __construct($db)
-    {
-        $this->db = $db;
-    }
+        $stmt->bind_param("sssssi", $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado, $id_usuario);
 
-    // Metodo para crear una nueva encuesta
-    public function crearEncuesta($id_usuario_creador, $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado)
-    {
-        // Eliminar $id_encuesta porque debe ser autoincremental
-        $query = "INSERT INTO encuestas (id_usuario_creador, titulo, descripcion, fecha_inicio, fecha_fin, estado) 
-                  VALUES (?, ?, ?, ?, ?, ?)";
-        $stmt = $this->db->prepare($query); // Preparamos la consulta
-
-        // Asumimos que el id_usuario_creador es un entero, el resto son cadenas
-        $stmt->bind_param("isssss", $id_usuario_creador, $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado);
-
-        // Ejecutamos la consulta
         if ($stmt->execute()) {
-            // Retornamos el ID de la encuesta creada si la inserción fue exitosa
-            return $stmt->insert_id;
+            return $this->db->insert_id; // Regresa el ID de la encuesta creada
         } else {
-            return false;
+            return $stmt->error; // Regresa el error específico
         }
     }
 
-    // Método para obtener todas las encuestas de la base de datos
-    public function obtenerEncuestas()
+    public function agregarPregunta($id_encuesta, $texto_pregunta, $tipo_pregunta)
     {
-        $query = "SELECT * FROM encuestas";
-        $result = $this->db->query($query); // Ejecutamos la consulta
-        return $result->fetch_all(MYSQLI_ASSOC); // Devolvemos el resultado como array asociativo
+        $query = "INSERT INTO Preguntas (id_encuesta, texto_pregunta, tipo_pregunta) VALUES (?, ?, ?)";
+        $stmt = $this->db->prepare($query);
+
+        if ($stmt === false) {
+            die('Error en la preparación de la consulta: ' . $this->db->error);
+        }
+
+        $stmt->bind_param("iss", $id_encuesta, $texto_pregunta, $tipo_pregunta);
+
+        if ($stmt->execute()) {
+            return $this->db->insert_id; // ID de la pregunta creada
+        } else {
+            return $stmt->error; // Regresa el error específico
+        }
+    }
+
+    public function agregarOpcion($id_pregunta, $texto_opcion)
+    {
+        $query = "INSERT INTO Opciones (id_pregunta, texto_opcion) VALUES (?, ?)";
+        $stmt = $this->db->prepare($query);
+
+        if ($stmt === false) {
+            die('Error en la preparación de la consulta: ' . $this->db->error);
+        }
+
+        $stmt->bind_param("is", $id_pregunta, $texto_opcion);
+        return $stmt->execute();
+    }
+
+    public function eliminarEncuesta($id_encuesta)
+    {
+
+        // Primero elimina las preguntas asociadas a la encuesta
+        $this->eliminarPreguntasEncuesta($id_encuesta);
+
+        $query = "DELETE FROM Encuestas WHERE id_encuesta = ?";
+        $stmt = $this->db->prepare($query);
+
+        if ($stmt === false) {
+            die('Error en la preparación de la consulta: ' . $this->db->error);
+        }
+
+        $stmt->bind_param("i", $id_encuesta);
+
+        if ($stmt->execute()) {
+            return true;
+        } else {
+            return $stmt->error; // Regresa el error específico
+        }
+    }
+
+    public function eliminarPreguntasEncuesta($id_encuesta)
+    {
+        // Primero elimina las opciones asociadas a las preguntas de la encuesta
+        $this->eliminarOpcionesPreguntasEncuesta($id_encuesta);
+
+        // Luego elimina las preguntas de la encuesta
+        $query = "DELETE FROM Preguntas WHERE id_encuesta = ?";
+        $stmt = $this->db->prepare($query);
+
+        if ($stmt === false) {
+            die('Error en la preparación de la consulta: ' . $this->db->error);
+        }
+
+        $stmt->bind_param("i", $id_encuesta);
+
+        if ($stmt->execute()) {
+            return true;
+        } else {
+            return $stmt->error; // Regresa el error específico
+        }
+    }
+
+    public function eliminarOpcionesPreguntasEncuesta($id_encuesta)
+    {
+        // Elimina las opciones asociadas a las preguntas de la encuesta
+        $query = "DELETE FROM Opciones WHERE id_pregunta IN (SELECT id_pregunta FROM Preguntas WHERE id_encuesta = ?)";
+        $stmt = $this->db->prepare($query);
+
+        if ($stmt === false) {
+            die('Error en la preparación de la consulta: ' . $this->db->error);
+        }
+
+        $stmt->bind_param("i", $id_encuesta);
+
+        if ($stmt->execute()) {
+            return true;
+        } else {
+            return $stmt->error; // Regresa el error específico
+        }
+    }
+
+
+    public function actualizarEncuesta($id_encuesta, $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado)
+    {
+        $query = "UPDATE Encuestas SET titulo = ?, descripcion = ?, fecha_inicio = ?, fecha_fin = ?, estado = ? WHERE id_encuesta = ?";
+        $stmt = $this->db->prepare($query);
+
+        if ($stmt === false) {
+            die('Error en la preparación de la consulta: ' . $this->db->error);
+        }
+
+        $stmt->bind_param("sssssi", $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado, $id_encuesta);
+
+        if ($stmt->execute()) {
+            return true;
+        } else {
+            return $stmt->error; // Regresa el error específico
+        }
     }
 }

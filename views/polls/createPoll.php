@@ -2,58 +2,64 @@
 <html lang="es">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Nueva Encuesta</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <title>Crear Encuesta</title>
+    <script src="../../public/js/createPoll.js"></script>
 </head>
 
 <body>
-    <div class="container mt-5">
-        <h1>Nueva Encuesta</h1>
-        <form action="guardar_encuesta.php" method="POST">
-            <div class="form-group">
-                <label for="nombre">Nombre de la Encuesta</label>
-                <input type="text" name="nombre" class="form-control" required>
-            </div>
-            <div class="form-group">
-                <label for="descripcion">Descripción</label>
-                <textarea name="descripcion" class="form-control"></textarea>
-            </div>
+    <form id="crearEncuestaForm" action="../../controllers/pollController.php" method="post">
+        <input type="hidden" name="action" value="crearEncuesta">
+        <label for="titulo">Título:</label>
+        <input type="text" name="titulo" required><br>
 
-            <div id="preguntas-container">
-                <div class="form-group pregunta">
-                    <label>Pregunta</label>
-                    <input type="text" name="preguntas[0][texto]" class="form-control" placeholder="Tu pregunta" required>
-                    <label>Tipo de respuesta:</label>
-                    <select name="preguntas[0][tipo]" class="form-control">
-                        <option value="unica">Única</option>
-                        <option value="multiple">Múltiple</option>
-                    </select>
-                    <div class="opciones mt-3">
-                        <label>Opciones:</label>
-                        <input type="text" name="preguntas[0][opciones][]" class="form-control mt-2" placeholder="Opción 1">
-                        <button type="button" class="btn btn-sm btn-secondary add-opcion mt-2">Añadir opción</button>
-                    </div>
-                </div>
-            </div>
+        <label for="descripcion">Descripción:</label>
+        <textarea name="descripcion" required></textarea><br>
 
-            <button type="button" class="btn btn-primary add-pregunta mt-4">Añadir Pregunta</button>
-            <button type="submit" class="btn btn-success mt-4">Guardar Encuesta</button>
-        </form>
+        <label for="fecha_inicio">Fecha de Inicio:</label>
+        <input type="date" name="fecha_inicio" required><br>
 
-        <form action="http://localhost/pollster/controllers/encuestaController.php" method="post">
-            <label for="titulo">Título de la encuesta:</label>
-            <input type="text" name="titulo" id="titulo" required><br>
+        <label for="fecha_fin">Fecha de Fin:</label>
+        <input type="date" name="fecha_fin" required><br>
 
-            <label for="descripcion">Descripción:</label>
-            <textarea name="descripcion" id="descripcion" required></textarea><br>
+        <label for="estado">Estado:</label>
+        <select name="estado" required>
+            <option value="activa">Activa</option>
+            <option value="inactiva">Inactiva</option>
+        </select><br>
 
-            <button type="submit">Crear Encuesta</button>
-        </form>
-    </div>
-    <script src="../../public/js/crearOps.js"></script>
+        <div id="preguntasContainer">
+            <button type="button" onclick="agregarPregunta()">Añadir Pregunta</button>
+        </div>
+
+        <input type="submit" value="Crear Encuesta">
+    </form>
+
+    <form id="eliminarEncuestaForm" action="../../controllers/pollController.php" method="post">
+        <input type="hidden" name="action" value="eliminarEncuesta">
+        <label for="id_encuesta">ID de la Encuesta:</label>
+        <input type="text" name="id_encuesta" required><br>
+        <input type="submit" value="Eliminar Encuesta">
+    </form>
+
+    <form id="actualizarEncuestaForm" action="../../controllers/pollController.php" method="post">
+        <input type="hidden" name="action" value="actualizarEncuesta">
+        <label for="id_encuesta">ID de la Encuesta:</label>
+        <input type="text" name="id_encuesta" required><br>
+        <label for="titulo">Título:</label>
+        <input type="text" name="titulo" required><br>
+        <label for="descripcion">Descripción:</label>
+        <textarea name="descripcion" required></textarea><br>
+        <label for="fecha_inicio">Fecha de Inicio:</label>
+        <input type="date" name="fecha_inicio" required><br>
+        <label for="fecha_fin">Fecha de Fin:</label>
+        <input type="date" name="fecha_fin" required><br>
+        <label for="estado">Estado:</label>
+        <select name="estado" required>
+            <option value="activa">Activa</option>
+            <option value="inactiva">Inactiva</option>
+        </select><br>
+        <input type="submit" value="Actualizar Encuesta">
+    </form>
 </body>
 
 </html>
