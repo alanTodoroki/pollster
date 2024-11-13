@@ -31,7 +31,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     $_POST['nombre'],
                     $_POST['apellido'],
                     $_POST['correo_electronico'],
-                    $contraseña
+                    $contrasenia
                 );
 
                 if ($stmt->execute()) {

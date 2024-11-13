@@ -1,153 +1,129 @@
-<html>
+<?php
+
+session_start();
+require_once '../../models/userModel..php';
+require_once '../../models/configurationModel.php';
+require_once '../../models/pollModel.php';
+require_once '../../models/voteModel.php';
+
+if (!isset($_SESSION['id_usuario'])) {
+    header("Location: ../../views/users/login.php");
+}
+
+$usuarioModel = new UsuarioModel();
+$encuestaModel = new EncuestaModel();
+$votacionModel = new VotacionModel();
+
+$usuario = $usuarioModel->obtenerUsuario($_SESSION['id_usuario']);
+/*$encuestas = $encuestaModel->obtenerEncuestasPorUsuario($_SESSION['id_usuario']);
+$votaciones = $votacionModel->obtenerVotacionesPorUsuario($_SESSION['id_usuario']);
+*/
+?>
+
+
+
+<!DOCTYPE html>
+<html lang="es">
 
 <head>
-    <title>
-        Active Polls
-    </title>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <title>Feed del Usuario</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f5f5f5;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            width: 90%;
-            margin: 20px auto;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header h1 {
-            font-size: 24px;
-            font-weight: bold;
-        }
-
-        .create-poll {
-            background-color: #000;
-            color: #fff;
-            padding: 10px 20px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        .polls {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px;
-        }
-
         .poll {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 30%;
+            border: 1px solid #ccc;
             padding: 20px;
-            box-sizing: border-box;
+            margin-bottom: 20px;
+            border-radius: 5px;
         }
 
         .poll-header {
             display: flex;
             align-items: center;
-            margin-bottom: 10px;
         }
 
-        .poll-header img {
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
+        .poll-header i {
+            font-size: 40px;
             margin-right: 10px;
         }
 
         .poll-header .info {
-            font-size: 14px;
+            flex-grow: 1;
         }
 
-        .poll-header .info .name {
-            font-weight: bold;
+        .poll-header .icon {
+            margin-left: auto;
         }
 
-        .poll-header .info .time {
-            color: #888;
-        }
-
-        .poll-body {
-            margin-top: 10px;
-        }
-
-        .poll-body h2 {
-            font-size: 18px;
-            margin: 0 0 10px 0;
-        }
-
-        .poll-body p {
-            color: #888;
-            margin: 0 0 20px 0;
-        }
-
-        .poll-options {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+        .poll-body h3 {
+            margin-top: 0;
         }
 
         .poll-options li {
             display: flex;
             justify-content: space-between;
-            align-items: center;
-            background-color: #f5f5f5;
-            padding: 10px;
-            border-radius: 5px;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>
-                Active Polls
-            </h1>
-            <button class="create-poll">
-                Create Poll
-            </button>
-        </div>
+    <div class="user-profile">
+        <img src="foto_de_perfil.jpg" alt="Foto de perfil" width="50" height="50">
+        <h1>Nombre de Usuario</h1>
+        <p>Correo Electrónico</p>
+        <button onclick="redirectToSettings()">Configuración</button>
     </div>
-    <div class="poll" data-poll-id="<?php echo $poll_id; ?>">
-        <div class="poll-header">
-            <img alt="User profile picture" height="40" src="<?php echo $user_image; ?>" width="40" />
-            <div class="info">
-                <div class="name">
-                    <?php echo $user_name; ?>
+
+    <div class="feed">
+        <!-- Ejemplo de Encuesta -->
+        <div class="poll">
+            <div class="poll-header">
+                <i class="fas fa-user-circle"></i>
+                <div class="info">
+                    <h2>Nombre de Usuario</h2>
+                    <p>3 semanas atrás</p>
                 </div>
-                <div class="time">
-                    <?php echo $time_ago; ?>
+                <div class="icon">
+                    <i class="fas fa-exchange-alt"></i>
                 </div>
             </div>
+            <div class="poll-body">
+                <h3>Título de la Encuesta</h3>
+                <p>Descripción de la encuesta.</p>
+                <button>Participar en esta encuesta</button>
+            </div>
         </div>
-        <div class="poll-body">
-            <h2><?php echo $poll_title; ?></h2>
-            <p><?php echo $poll_description; ?></p>
-            <ul class="poll-options">
-                <?php foreach ($options as $option): ?>
-                    <li class="poll-option" data-option-id="<?php echo $option['id']; ?>">
-                        <div class="progress-bar" style="width: <?php echo $option['percentage']; ?>%"></div>
-                        <span class="option-text"><?php echo $option['text']; ?></span>
-                        <span class="option-percentage"><?php echo $option['percentage']; ?>%</span>
-                    </li>
-                <?php endforeach; ?>
-            </ul>
-            <div class="total-votes">Total votos: <span class="vote-count"><?php echo $total_votes; ?></span></div>
+
+        <!-- Ejemplo de Votación -->
+        <div class="poll">
+            <div class="poll-header">
+                <i class="fas fa-user-circle"></i>
+                <div class="info">
+                    <h2>Nombre de Usuario</h2>
+                    <p>3 semanas atrás</p>
+                </div>
+                <div class="icon">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+            </div>
+            <div class="poll-body">
+                <h3>¿Cuál es tu tipo de mascota favorita?</h3>
+                <p>Ayúdanos a entender tus preferencias.</p>
+                <ul class="poll-options">
+                    <li><span>Perro</span><span>45%</span></li>
+                    <li><span>Gato</span><span>35%</span></li>
+                    <li><span>Pez</span><span>12%</span></li>
+                    <li><span>Pájaro</span><span>8%</span></li>
+                </ul>
+            </div>
         </div>
     </div>
+
+    <script>
+        function redirectToSettings() {
+            window.location.href = 'configuration.php';
+        }
+    </script>
 </body>
 
 </html>

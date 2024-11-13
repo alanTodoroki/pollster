@@ -21,7 +21,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         if ($user && password_verify($_POST['contraseña'], $user['contraseña'])) {
             $_SESSION['id_usuario'] = $user['id_usuario'];
-            header("Location: ../../index.php");
+            header("Location: ../feed/configuration.php");
             exit();
         } else {
             $message = 'Lo siento, las credenciales no coinciden';
