@@ -1,7 +1,9 @@
 <?php
 session_start();
-require_once "../../config/database.php";
+require_once '../../config/db.php';
 
+$db = new Database();
+$conn = $db->getConnection();
 // Removemos la verificación de sesión inicial para permitir otros logins
 $message = '';
 
@@ -11,17 +13,30 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     session_destroy();
     session_start();
 
-    if (!empty($_POST['correo_electronico']) && !empty($_POST['contraseña'])) {
-        $stmt = $conn->prepare('SELECT id_usuario, correo_electronico, contraseña FROM Usuarios WHERE correo_electronico = ?');
-        $stmt->bind_param('s', $_POST['correo_electronico']);
+    if (!empty($_POST['correo_electronico']) && !empty($_POST['contrasenia'])) {
+        // Preparar la consulta para buscar por correo electrónico o nombre de usuario
+        $input = $_POST['correo_electronico']; // Puede ser correo o nombre de usuario
+        $stmt = $conn->prepare('SELECT id_usuario, correo_electronico, contrasenia, nombre_usuario, rol FROM Usuarios WHERE correo_electronico = ? OR nombre_usuario = ?');
+        //$stmt = $conn->prepare('SELECT id_usuario, correo_electronico, contrasenia, nombre_usuario, rol FROM Usuarios WHERE correo_electronico = ?');
+        //$stmt->bind_param('ss', $_POST['correo_electronico']);
+        $stmt->bind_param('ss', $input, $input);
         $stmt->execute();
 
         $result = $stmt->get_result();
         $user = $result->fetch_assoc();
 
-        if ($user && password_verify($_POST['contraseña'], $user['contraseña'])) {
+        if ($user && password_verify($_POST['contrasenia'], $user['contrasenia'])) {
+            //$_SESSION['id_usuario'] = $user['id_usuario'];
             $_SESSION['id_usuario'] = $user['id_usuario'];
-            header("Location: ../feed/configuration.php");
+            $_SESSION['nombre_usuario'] = $user['nombre_usuario']; // Guardar el nombre de usuario en la sesión
+            $_SESSION['rol'] = $user['rol']; // Guardar el rol en la sesión
+
+            // Redirigir según el rol del usuario
+            if ($user['rol'] === 'administrador') {
+                header("Location: ../admin/dashboard.php"); // Redirigir a la página del administrador
+            } else {
+                header("Location: ../feed/feedUser.php"); // Redirigir a la página del usuario general
+            }
             exit();
         } else {
             $message = 'Lo siento, las credenciales no coinciden';
@@ -29,30 +44,132 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
-
 <!DOCTYPE html>
-<html>
+<html lang="es">
 
 <head>
-    <meta charset="utf-8">
-    <title>Login</title>
-    <link href="https://fonts.googleapis.com/css?family=Roboto" rel="stylesheet">
-    <link rel="stylesheet" href="../../assets/css/style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inicio de sesión</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: url('../../public/img/fondo.png') no-repeat center center fixed;
+            background-size: cover;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .container {
+            background: none;
+            /* Elimina cualquier fondo */
+            backdrop-filter: blur(10px);
+            /* Solo el efecto de desenfoque */
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: none;
+            /* Elimina la sombra */
+            text-align: center;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: black;
+            /* Color de texto blanco */
+        }
+
+        input[type="text"],
+        input[type="password"] {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .checkbox-container input {
+            margin-right: 10px;
+        }
+
+        .btn {
+            background-color: #006E90;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background-color: #005f6b;
+        }
+
+        .links {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .links a {
+            color: #006E90;
+            text-decoration: none;
+        }
+
+        .links a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 
 <body>
-    <?php if (!empty($message)): ?>
-        <p><?= $message ?></p>
-    <?php endif; ?>
-
-    <h1>Login</h1>
-    <span>or <a href="signup.php">SignUp</a></span>
-
-    <form action="login.php" method="POST">
-        <input name="correo_electronico" type="email" placeholder="Introduce tu correo electrónico" required>
-        <input name="contraseña" type="password" placeholder="Introduce tu contraseña" required>
-        <input type="submit" value="Iniciar Sesión">
-    </form>
+    <div class="container">
+        <h1>Inicio de sesión</h1>
+        <?php if (!empty($message)): ?>
+            <p style="color: red;"><?= htmlspecialchars($message) ?></p>
+        <?php endif; ?>
+        <form action="login.php" method="POST">
+            <input name="correo_electronico" type="text" placeholder="Correo electrónico o nombre de usuario" required value="<?= htmlspecialchars($_POST['correo_electronico'] ?? '') ?>">
+            <input name="contrasenia" type="password" placeholder="Contraseña" required>
+            <div class="checkbox-container">
+                <input type="checkbox" id="show-password">
+                <label for="show-password">Mostrar contraseña</label>
+            </div>
+            <button type="submit" class="btn">Iniciar sesión</button>
+        </form>
+        <div class="links">
+            <p>¿Olvidaste tu <a href="#">Contraseña?</a></p>
+            <p>¿No tienes cuenta? <a href="signup.php">Regístrate</a>.</p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('show-password').addEventListener('change', function() {
+            const passwordInput = document.querySelector('input[name="contrasenia"]');
+            if (this.checked) {
+                passwordInput.type = 'text';
+            } else {
+                passwordInput.type = 'password';
+            }
+        });
+    </script>
 </body>
 
 </html>

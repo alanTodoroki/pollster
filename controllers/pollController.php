@@ -1,5 +1,5 @@
 <?php
-include_once '../models/pollModel.php';
+require_once '../models/pollModel.php';
 
 /*if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $titulo = $_POST['titulo'];

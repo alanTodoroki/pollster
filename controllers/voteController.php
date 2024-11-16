@@ -1,6 +1,6 @@
 <?php
 session_start();
-include_once '../models/voteModel.php';
+require_once '../models/voteModel.php';
 
 /*if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $titulo = $_POST['titulo'];

@@ -1,14 +1,32 @@
 <?php
-include_once '../config/database.php';
+//require_once 'C:/wamp64/www/pollster/config/db.php';
 
 class EncuestaModel
 {
     private $db;
 
     public function __construct()
-    {
-        global $conn;
-        $this->db = $conn;
+    {        /*global $conn;
+        //$this->db = $conn;
+        //require_once '../config/db.php';
+        require_once 'C:/wamp64/www/pollster/config/db.php';
+        //global $conn;
+        //$this->db = $conn;
+        //$this->db = new Database();
+        $database = new Database(); // Crea una instancia de la clase Database
+        $this->db = $database->getConnection();
+        */
+        try {
+            require_once 'C:/wamp64/www/pollster/config/db.php';
+            $database = new Database();
+            $this->db = $database->getConnection();
+
+            if (!$this->db) {
+                throw new Exception("No se pudo establecer la conexión a la base de datos");
+            }
+        } catch (Exception $e) {
+            die("Error de conexión: " . $e->getMessage());
+        }
     }
 
     public function crearEncuesta($titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado, $id_usuario)
@@ -140,5 +158,17 @@ class EncuestaModel
         } else {
             return $stmt->error; // Regresa el error específico
         }
+    }
+    public function obtenerEncuestasActivas()
+    {
+        $query = "SELECT * FROM Encuestas WHERE estado = 'activa' AND fecha_inicio <= CURDATE() AND fecha_fin >= CURDATE()";
+        $result = $this->db->query($query);
+
+        $encuestas = [];
+        while ($row = $result->fetch_assoc()) {
+            $encuestas[] = $row;
+        }
+
+        return $encuestas;
     }
 }

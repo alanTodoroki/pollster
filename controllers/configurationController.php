@@ -1,6 +1,6 @@
 <?php
 session_start();
-include_once '../models/configurationModel.php';
+require_once '../models/updateConfigurationModel.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $nombre = $_POST['nombre'];
@@ -11,16 +11,4 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     $resultado = actualizarConfiguracion($id_usuario, $nombre, $correo, $contrasenia, $foto_perfil);
     echo $resultado;
-}
-
-function actualizarConfiguracion($id_usuario, $nombre, $correo, $contrasenia, $foto_perfil)
-{
-    $usuarioModel = new UsuarioModel();
-    $resultado = $usuarioModel->actualizarConfiguracion($id_usuario, $nombre, $correo, $contrasenia, $foto_perfil);
-
-    if ($resultado === true) {
-        return "Configuración actualizada exitosamente";
-    } else {
-        return "Error al actualizar la configuración: " . $resultado;
-    }
 }

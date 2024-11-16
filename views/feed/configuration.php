@@ -1,6 +1,6 @@
 <?php
 session_start();
-include_once '../../models/configurationModel.php';
+require_once '../../models/updateConfigurationModel.php';
 
 // Verificar si el usuario está logueado
 if (!isset($_SESSION['id_usuario'])) {
@@ -40,11 +40,14 @@ $usuario = $usuarioModel->obtenerUsuario($_SESSION['id_usuario']);
     <div class="config-form">
         <h1>Configuración del Usuario</h1>
         <form id="configForm" action="../../controllers/configurationController.php" method="post" enctype="multipart/form-data">
+            <label for="foto_perfil">Foto de Perfil Actual:</label>
+            <img src="<?php echo $usuario['foto_perfil']; ?>" alt="Foto de perfil" style="width: 100px; height: 100px;" /><br>
+
             <label for="nombre">Nombre de Usuario:</label>
-            <input type="text" id="nombre" name="nombre" required><br>
+            <input type="text" id="nombre" name="nombre" value="<?php echo $usuario['nombre']; ?>" required><br>
 
             <label for="correo">Correo Electrónico:</label>
-            <input type="email" id="correo" name="correo" required><br>
+            <input type="email" id="correo" name="correo" value="<?php echo $usuario['correo_electronico']; ?>" required><br>
 
             <label for="contrasenia">Contraseña:</label>
             <input type="password" id="contrasenia" name="contrasenia" required><br>
