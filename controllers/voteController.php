@@ -1,21 +1,10 @@
 <?php
-session_start();
+
+require_once '../config/db.php';
 require_once '../models/voteModel.php';
 
-/*if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $titulo = $_POST['titulo'];
-    $descripcion = $_POST['descripcion'];
-    $fecha_inicio = $_POST['fecha_inicio'];
-    $fecha_fin = $_POST['fecha_fin'];
-    $estado = $_POST['estado'];
-    $id_usuario = 1; // Asegúrate de obtener el ID del usuario de manera adecuada
-    $texto_pregunta = $_POST['texto_pregunta'];
-    $opciones = $_POST['opciones'];
-
-    $resultado = crearVotacionCompleta($titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado, $id_usuario, $texto_pregunta, $opciones);
-
-    echo $resultado;
-}*/
+$database = new Database();
+$db = $database->getConnection();
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $action = $_POST['action'];
@@ -29,13 +18,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $estado = $_POST['estado'];
             $opciones = $_POST['opciones'];
 
-            $resultado = crearVotacionCompleta($titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado, $opciones);
+            $resultado = crearVotacionCompleta($db, $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado, $opciones);
             echo $resultado;
             break;
 
         case 'eliminarVotacion':
             $id_votacion = $_POST['id_votacion'];
-            $resultado = eliminarVotacion($id_votacion);
+            $resultado = eliminarVotacion($db, $id_votacion);
             echo $resultado;
             break;
 
@@ -47,7 +36,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $fecha_fin = $_POST['fecha_fin'];
             $estado = $_POST['estado'];
 
-            $resultado = actualizarVotacion($id_votacion, $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado);
+            $resultado = actualizarVotacion($db, $id_votacion, $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado);
             echo $resultado;
             break;
 
@@ -57,7 +46,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $tipo_opcion = $_POST['tipo_opcion'];
             $cantidad = $_POST['cantidad'];
 
-            $resultado = agregarVoto($id_usuario, $id_opcion, $tipo_opcion, $cantidad);
+            $resultado = agregarVoto($db, $id_usuario, $id_opcion, $tipo_opcion, $cantidad);
             echo $resultado;
             break;
 
@@ -67,9 +56,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 
-function crearVotacionCompleta($titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado, $opciones)
+function crearVotacionCompleta($db, $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado, $opciones)
 {
-    $votacionModel = new VotacionModel();
+    $votacionModel = new VotacionModel($db);
     $id_votacion = $votacionModel->crearVotacion($titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado);
 
     if (!$id_votacion) {
@@ -83,9 +72,9 @@ function crearVotacionCompleta($titulo, $descripcion, $fecha_inicio, $fecha_fin,
     return "Votación creada exitosamente";
 }
 
-function eliminarVotacion($id_votacion)
+function eliminarVotacion($db, $id_votacion)
 {
-    $votacionModel = new VotacionModel();
+    $votacionModel = new VotacionModel($db);
     $resultado = $votacionModel->eliminarVotacion($id_votacion);
 
     if ($resultado === true) {
@@ -95,9 +84,9 @@ function eliminarVotacion($id_votacion)
     }
 }
 
-function actualizarVotacion($id_votacion, $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado)
+function actualizarVotacion($db, $id_votacion, $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado)
 {
-    $votacionModel = new VotacionModel();
+    $votacionModel = new VotacionModel($db);
     $resultado = $votacionModel->actualizarVotacion($id_votacion, $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado);
 
     if ($resultado === true) {
@@ -107,9 +96,9 @@ function actualizarVotacion($id_votacion, $titulo, $descripcion, $fecha_inicio, 
     }
 }
 
-function agregarVoto($id_usuario, $id_opcion, $tipo_opcion, $cantidad)
+function agregarVoto($db, $id_usuario, $id_opcion, $tipo_opcion, $cantidad)
 {
-    $votacionModel = new VotacionModel();
+    $votacionModel = new VotacionModel($db);
     $resultado = $votacionModel->agregarVoto($id_usuario, $id_opcion, $tipo_opcion, $cantidad);
 
     if ($resultado === true) {

@@ -1,14 +1,25 @@
 <?php
-session_start();
-require_once '../models/updateConfigurationModel.php';
+//session_start();
+require_once '../models/configurationModel.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $nombre = $_POST['nombre'];
-    $correo = $_POST['correo'];
-    $contrasenia = $_POST['contrasenia'];
-    $foto_perfil = $_FILES['foto_perfil'];
-    $id_usuario = $_SESSION['id_usuario']; // Asegúrate de obtener el ID del usuario de la sesión
+    $action = $_POST['action'];
 
-    $resultado = actualizarConfiguracion($id_usuario, $nombre, $correo, $contrasenia, $foto_perfil);
-    echo $resultado;
+    switch ($action) {
+        case 'actualizarConfiguracion':
+            $nombre = $_POST['nombre'];
+            $nombre_usuario = $_POST['nombre_usuario'];
+            $correo = $_POST['correo'];
+            $contrasenia = $_POST['contrasenia'];
+            $foto_perfil = $_FILES['foto_perfil'];
+            $id_usuario = $_SESSION['id_usuario'];
+
+
+            $resultado = actualizarConfiguracion($id_usuario, $nombre, $nombre_usuario, $correo, $contrasenia, $foto_perfil);
+            echo $resultado;
+    }
+
+    // Asegúrate de obtener el ID del usuario de la sesión
+
+
 }

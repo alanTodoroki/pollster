@@ -1,0 +1,24 @@
+{
+  "usuarios": [
+    {
+      "user_id": "12345",
+      "nombre": "Juan Pérez",
+      "correo": "juan.perez@example.com",
+      "preferencias": ["acción", "comedia"],
+      "historial_visualizacion": ["movie_001", "movie_002"],
+      "recomendaciones": ["movie_003", "movie_004"]
+    }
+  ],
+  "contenido": [
+    {
+      "content_id": "movie_001",
+      "titulo": "El Gran Escape",
+      "genero": ["acción", "aventura"],
+      "descripcion": "Un grupo intenta escapar...",
+      "calificaciones": [
+        { "user_id": "12345", "puntuacion": 5 },
+        { "user_id": "67890", "puntuacion": 4 }
+      ]
+    }
+  ]
+}

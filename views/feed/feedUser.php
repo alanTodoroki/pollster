@@ -1,8 +1,8 @@
 <?php
-
 require_once '../../config/db.php';
+
 require_once '../../models/userModel.php';
-require_once '../../models/updateConfigurationModel.php';
+require_once '../../models/configurationModel.php';
 require_once '../../models/pollModel.php';
 require_once '../../models/voteModel.php';
 
@@ -17,7 +17,7 @@ if (!isset($_SESSION['id_usuario'])) {
 
 $usuarioModel = new UsuarioModel($db);
 $encuestaModel = new EncuestaModel();
-$votacionModel = new VotacionModel();
+$votacionModel = new VotacionModel($db);
 
 $usuario = $usuarioModel->obtenerUsuario($_SESSION['id_usuario']);
 /*$encuestas = $encuestaModel->obtenerEncuestasPorUsuario($_SESSION['id_usuario']);
@@ -156,7 +156,6 @@ if (empty($votaciones)) {
             </div>
         <?php endforeach; ?>
     </div>
-
     <script>
         function redirectToSettings() {
             window.location.href = 'configuration.php';
