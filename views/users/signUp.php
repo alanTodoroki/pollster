@@ -1,85 +1,17 @@
 <?php
 session_start();
 require_once '../../config/db.php';
+require_once '../../controllers/auth/signUpController.php';
+
 
 $message = '';
 
 $db = new Database();
 $conn = $db->getConnection();
+$signUpController = new SignUpController($conn);
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-
-
-    if (
-        !empty($_POST['correo_electronico']) && !empty($_POST['contrasenia']) &&
-        !empty($_POST['confirmar_contrasenia']) && !empty($_POST['nombre']) &&
-        !empty($_POST['apellido'])
-    ) {
-        if ($_POST['contrasenia'] !== $_POST['confirmar_contrasenia']) {
-            $message = 'Las contraseñas no coinciden.';
-        } else {
-            // Verificar si el correo ya existe
-            $check_email = $conn->prepare("SELECT id_usuario FROM Usuarios WHERE correo_electronico = ?");
-            /*Aqui agregué*/
-            $check_email->bind_param("s", $_POST['correo_electronico']);
-            $check_email->execute();
-            $result = $check_email->get_result();
-
-            /*if ($check_email === false) {
-                die('Error en la preparación de la consulta: ' . $conn->error);
-            }
-
-            $check_email->bind_param("s", $_POST['correo_electronico']);
-            $check_email->execute();
-            $result = $check_email->get_result();
-            */
-            if ($result->num_rows > 0) {
-                $message = 'El correo electrónico ya está registrado.';
-            } else {
-                // Verificar si el nombre de usuario ya existe
-                $check_username = $conn->prepare("SELECT id_usuario FROM Usuarios WHERE nombre_usuario = ?");
-                $check_username->bind_param("s", $_POST['nombre_usuario']);
-                $check_username->execute();
-                $result_username = $check_username->get_result();
-
-                if ($result_username->num_rows > 0) {
-                    $message = 'El nombre de usuario ya está registrado.';
-                } else {
-
-                    $sql = "INSERT INTO Usuarios (nombre, apellido, correo_electronico, contrasenia, rol, nombre_usuario) VALUES (?, ?, ?, ?, 'usuario',?)";
-                    $stmt = $conn->prepare($sql);
-
-                    /*if ($stmt === false) {
-                    die('Error en la preparación de la consulta: ' . $conn->error);
-                }*/
-
-                    $contrasenia = password_hash($_POST['contrasenia'], PASSWORD_BCRYPT);
-                    $stmt->bind_param(
-                        "sssss",
-                        $_POST['nombre'],
-                        $_POST['apellido'],
-                        $_POST['correo_electronico'],
-                        $contrasenia,
-                        $_POST['nombre_usuario']
-                    );
-
-                    if ($stmt->execute()) {
-                        session_unset();
-                        session_destroy();
-                        $message = 'Usuario creado con éxito. <a href="login.php">Iniciar sesión</a>';
-                    } else {
-                        if ($conn->errno === 1062) {
-                            $message = 'El correo electrónico ya está registrado.';
-                        } else {
-                            $message = 'Error al crear la cuenta: ' . $conn->error;
-                        }
-                    }
-                }
-            }
-        }
-    } else {
-        $message = 'Por favor completa todos los campos.';
-    }
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $message = $signUpController->handleSignUp($_POST);
 }
 ?>
 <!DOCTYPE html>
@@ -95,28 +27,44 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             font-family: 'Roboto', sans-serif;
             background: url('../../public/img/fondo.png') no-repeat center center fixed;
             background-size: cover;
-            /* Fondo que se mantiene cubriendo la pantalla */
             display: flex;
             justify-content: flex-start;
-            /* Coloca el formulario a la izquierda */
             align-items: center;
             height: 100vh;
             margin: 0;
             padding-left: 20px;
-            /* Espacio a la izquierda para que no quede pegado al borde */
         }
 
         .container {
-            padding: 20px;
+            padding: 40px;
             text-align: center;
             width: 100%;
             max-width: 400px;
+            background: none;
             box-sizing: border-box;
+            border-radius: 8px;
+        }
+
+        .logo-container {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-container img {
+            width: 80px;
+            height: auto;
+        }
+
+        .logo-container h2 {
+            margin: 10px 0 0;
+            font-size: 22px;
+            color: black;
         }
 
         h1 {
             font-size: 24px;
             margin-bottom: 20px;
+            color: black;
         }
 
         span {
@@ -126,7 +74,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         span a {
-            color: #007b8a;
+            color: #006E90;
             text-decoration: none;
         }
 
@@ -147,7 +95,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         input[type="submit"] {
-            background-color: #007b8a;
+            background-color: #006E90;
             color: white;
             padding: 10px 20px;
             border: none;
@@ -177,9 +125,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
 <body>
     <div class="container">
+        <!-- Logo y nombre -->
+        <div class="logo-container">
+            <img src="../../public/img/logo.png" alt="Logo">
+            <h2>Pollster</h2>
+        </div>
+
         <?php if (!empty($message)): ?>
             <p class="<?= strpos($message, 'éxito') !== false ? 'message' : '' ?>">
-                <?= $message ?>
+                <?= htmlspecialchars($message) ?>
             </p>
         <?php endif; ?>
 

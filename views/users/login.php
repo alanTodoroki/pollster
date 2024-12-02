@@ -1,48 +1,27 @@
 <?php
 session_start();
 require_once '../../config/db.php';
+require_once '../../controllers/auth/loginController.php';
 
 $db = new Database();
-$conn = $db->getConnection();
+$db = $database->getConnection();
+$loginController = new LoginController($db);
+
 // Removemos la verificación de sesión inicial para permitir otros logins
 $message = '';
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    // Cerramos cualquier sesión existente antes de iniciar una nueva
-    session_unset();
-    session_destroy();
-    session_start();
-
-    if (!empty($_POST['correo_electronico']) && !empty($_POST['contrasenia'])) {
-        // Preparar la consulta para buscar por correo electrónico o nombre de usuario
-        $input = $_POST['correo_electronico']; // Puede ser correo o nombre de usuario
-        $stmt = $conn->prepare('SELECT id_usuario, correo_electronico, contrasenia, nombre_usuario, rol FROM Usuarios WHERE correo_electronico = ? OR nombre_usuario = ?');
-        //$stmt = $conn->prepare('SELECT id_usuario, correo_electronico, contrasenia, nombre_usuario, rol FROM Usuarios WHERE correo_electronico = ?');
-        //$stmt->bind_param('ss', $_POST['correo_electronico']);
-        $stmt->bind_param('ss', $input, $input);
-        $stmt->execute();
-
-        $result = $stmt->get_result();
-        $user = $result->fetch_assoc();
-
-        if ($user && password_verify($_POST['contrasenia'], $user['contrasenia'])) {
-            //$_SESSION['id_usuario'] = $user['id_usuario'];
-            $_SESSION['id_usuario'] = $user['id_usuario'];
-            $_SESSION['nombre_usuario'] = $user['nombre_usuario']; // Guardar el nombre de usuario en la sesión
-            $_SESSION['rol'] = $user['rol']; // Guardar el rol en la sesión
-
-            // Redirigir según el rol del usuario
-            if ($user['rol'] === 'administrador') {
-                header("Location: ../admin/dashboard.php"); // Redirigir a la página del administrador
-            } else {
-                header("Location: ../feed/feedUser.php"); // Redirigir a la página del usuario general
-            }
-            exit();
-        } else {
-            $message = 'Lo siento, las credenciales no coinciden';
-        }
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Verifica si los campos están completos
+    if (empty($_POST['correo_electronico']) || empty($_POST['contrasenia'])) {
+        $message = 'Por favor, llena todos los campos.';
+    } else {
+        // Envía los datos al controlador para su procesamiento
+        $correo_o_usuario = $_POST['correo_electronico'];
+        $contrasenia = $_POST['contrasenia'];
+        $message = $loginController->login($correo_o_usuario, $contrasenia);
     }
 }
+
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -66,17 +45,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
 
         .container {
-            background: none;
-            /* Elimina cualquier fondo */
-            backdrop-filter: blur(10px);
-            /* Solo el efecto de desenfoque */
             padding: 40px;
-            border-radius: 8px;
-            box-shadow: none;
-            /* Elimina la sombra */
             text-align: center;
             width: 100%;
             max-width: 400px;
+            background: none;
+            /* Elimina cualquier fondo */
+            box-sizing: border-box;
+            border-radius: 8px;
         }
 
         h1 {
@@ -137,17 +113,43 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         .links a:hover {
             text-decoration: underline;
         }
+
+        /* Contenedor del logo y el título */
+        .logo-title-wrapper {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Estilo del logo grande */
+        .logo-large {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 10px;
+            object-fit: contain;
+        }
+
+        /* Estilo del título Pollster */
+        .pollster-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #006E90;
+            margin: 0;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
+        <div class="logo-title-wrapper mb-4">
+            <img src="../../public/img/logo.png" alt="Logo de Pollster" class="logo-large">
+            <h1 class="pollster-title">Pollster</h1>
+        </div>
         <h1>Inicio de sesión</h1>
         <?php if (!empty($message)): ?>
             <p style="color: red;"><?= htmlspecialchars($message) ?></p>
         <?php endif; ?>
-        <form action="login.php" method="POST">
-            <input name="correo_electronico" type="text" placeholder="Correo electrónico o nombre de usuario" required value="<?= htmlspecialchars($_POST['correo_electronico'] ?? '') ?>">
+        <form action="../users/login.php" method="POST">
+            <input name="correo_electronico" type="text" placeholder="Correo electrónico o nombre de usuario" required autocomplete="off" value="" ?>
             <input name="contrasenia" type="password" placeholder="Contraseña" required>
             <div class="checkbox-container">
                 <input type="checkbox" id="show-password">
@@ -158,25 +160,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <div class="links">
             <p>¿Olvidaste tu <a href="#">Contraseña?</a></p>
             <p>¿No tienes cuenta? <a href="signup.php">Regístrate</a>.</p>
-        </div>
-    </div>
-    <div class="col-xl-3 col-sm-6 mb-xl-0 mb-4">
-        <div class="card">
-            <div class="card-header p-2 ps-3">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <p class="text-sm mb-0 text-capitalize">Today's Users</p>
-                        <h4 class="mb-0">2300</h4>
-                    </div>
-                    <div class="icon icon-md icon-shape bg-gradient-dark shadow-dark shadow text-center border-radius-lg">
-                        <i class="material-symbols-rounded opacity-10">person</i>
-                    </div>
-                </div>
-            </div>
-            <hr class="dark horizontal my-0">
-            <div class="card-footer p-2 ps-3">
-                <p class="mb-0 text-sm"><span class="text-success font-weight-bolder">+3% </span>than last month</p>
-            </div>
         </div>
     </div>
     <script>

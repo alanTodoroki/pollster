@@ -8,16 +8,17 @@ class UsuarioModel
         $this->conn = $db;
     }
 
-    public function verificarUsuario($correo, $contrasenia)
+    public function verificarUsuario($correo_o_usuario, $contrasenia)
     {
-        $query = "SELECT id_usuario, nombre, correo_electronico, contrasenia FROM Usuarios WHERE correo_electronico = ?";
+        $query = "SELECT id_usuario, nombre, apellido, nombre_usuario, correo_electronico, contrasenia, rol 
+              FROM Usuarios WHERE correo_electronico = ? OR nombre_usuario = ?";
         $stmt = $this->conn->prepare($query);
 
         if ($stmt === false) {
             die('Error en la preparación de la consulta: ' . $this->conn->error);
         }
 
-        $stmt->bind_param("s", $correo);
+        $stmt->bind_param("ss", $correo_o_usuario, $correo_o_usuario);
         $stmt->execute();
         $result = $stmt->get_result();
 
@@ -50,5 +51,36 @@ class UsuarioModel
         }
 
         return false;
+    }
+    public function verificarCorreo($correo)
+    {
+        $query = "SELECT id_usuario FROM Usuarios WHERE correo_electronico = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("s", $correo);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        return $result->num_rows > 0;
+    }
+
+    public function verificarNombreUsuario($nombreUsuario)
+    {
+        $query = "SELECT id_usuario FROM Usuarios WHERE nombre_usuario = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("s", $nombreUsuario);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        return $result->num_rows > 0;
+    }
+
+    public function registrarUsuario($nombre, $apellido, $correo, $contrasenia, $nombreUsuario)
+    {
+        $query = "INSERT INTO Usuarios (nombre, apellido, correo_electronico, contrasenia, rol, nombre_usuario) 
+                  VALUES (?, ?, ?, ?, 'usuario', ?)";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("sssss", $nombre, $apellido, $correo, $contrasenia, $nombreUsuario);
+
+        return $stmt->execute();
     }
 }

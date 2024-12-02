@@ -3,14 +3,14 @@
 class Auth
 {
     private $conn;
-    private $usuario_id;
+    private $id_usuario;
 
     public function __construct($db)
     {
         $this->conn = $db;
 
         if (isset($_SESSION['id_usuario'])) {
-            $this->usuario_id = $_SESSION['id_usuario'];
+            $this->id_usuario = $_SESSION['id_usuario'];
         }
     }
 
@@ -21,7 +21,7 @@ class Auth
             exit();
         }
 
-        $this->usuario_id = $_SESSION['usuario_id'];
+        $this->id_usuario = $_SESSION['id_usuario'];
     }
 
     public function checkRole($allowed_roles)
@@ -34,6 +34,6 @@ class Auth
 
     public function getUserId()
     {
-        return $this->usuario_id;
+        return $this->id_usuario;
     }
 }

@@ -1,6 +1,6 @@
 <?php
 //session_start();
-require_once '../models/configurationModel.php';
+require_once '../../models/configurationModel.php';
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $action = $_POST['action'];
