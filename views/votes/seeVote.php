@@ -27,6 +27,12 @@ $resultados = $votacionModel->obtenerResultadosVotacion($id_votacion);
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- Cargar html2canvas -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Cargar jsPDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+
     <style>
         :root {
             --primary-color: #C9DCB3;
@@ -71,17 +77,20 @@ $resultados = $votacionModel->obtenerResultadosVotacion($id_votacion);
         <div class="row mb-4">
             <div class="col-12 d-flex justify-content-between align-items-center">
                 <h1 class="mb-0"><?php echo htmlspecialchars($votacion['titulo']); ?></h1>
-                <div>
+                <div class="no-print">
                     <button class="btn btn-custom me-2" onclick="goBack()">
-                        <i class="fas fa-arrow-left me-2"></i>Regresar
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <button class="btn btn-custom me-2" onclick="exportToPDF()">
+                        <i class="fa-solid fa-file-pdf"></i>
                     </button>
                     <button class="btn btn-custom me-2" onclick="window.location.href='exportVote.php?id=<?php echo $id_votacion; ?>'">
-                        <i class="fas fa-file-export me-2"></i>Exportar
+                        <i class="fas fa-file-export"></i>
+                    </button>
+                    <button class="btn btn-custom me-2" onclick="window.location.href='updateVote.php?id=<?php echo $id_votacion; ?>'">
+                        <i class="fas fa-edit"></i>
                     </button>
 
-                    <button class="btn btn-custom" onclick="editVotation()">
-                        <i class="fas fa-edit me-2"></i>Editar
-                    </button>
                 </div>
             </div>
         </div>
@@ -189,17 +198,32 @@ $resultados = $votacionModel->obtenerResultadosVotacion($id_votacion);
             window.location.href = '../feed/feedUser.php';
         }
 
-
-        function exportResults() {
-            alert('Funcionalidad de exportación próximamente');
-            // Aquí puedes agregar la lógica real de exportación
-        }
-
         function editVotation() {
             alert('Funcionalidad de edición próximamente');
-            // Aquí puedes agregar la lógica real de edición
+        }
+
+        function exportToPDF() {
+            // Selecciona el contenedor principal del informe
+            const reportElement = document.querySelector('.container');
+
+            // Usa html2canvas para capturar el contenido como imagen
+            html2canvas(reportElement, {
+                scale: 2
+            }).then(canvas => {
+                const pdf = new jspdf.jsPDF('p', 'mm', 'a4'); // Orientación vertical, unidades en mm, tamaño A4
+                const imgData = canvas.toDataURL('image/png'); // Convierte el canvas a imagen
+                const pdfWidth = pdf.internal.pageSize.getWidth(); // Ancho del PDF
+                const pdfHeight = (canvas.height * pdfWidth) / canvas.width; // Ajusta el alto proporcional
+
+                // Agrega la imagen al PDF
+                pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+                // Guarda el archivo PDF con un nombre personalizado
+                pdf.save('informe.pdf');
+            });
         }
     </script>
+
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
 </body>
 

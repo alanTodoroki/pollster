@@ -145,6 +145,36 @@ class EncuestaModel
         }
     }
 
+    public function obtenerOpciones($id_pregunta)
+    {
+        $query = "SELECT * FROM opciones WHERE id_pregunta = ?";
+        $stmt = $this->conn->prepare($query); // $this->conn es la conexión a la base de datos
+        $stmt->bind_param('i', $id_pregunta); // Vinculamos el parámetro de la consulta
+        $stmt->execute(); // Ejecutamos la consulta
+        $result = $stmt->get_result(); // Obtenemos el resultado
+        return $result->fetch_all(MYSQLI_ASSOC); // Devolvemos un arreglo asociativo con los resultados
+    }
+
+
+    public function actualizarPregunta($id_pregunta, $texto_pregunta)
+    {
+        $query = "UPDATE preguntas SET texto_pregunta = ? WHERE id_pregunta = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('si', $texto_pregunta, $id_pregunta);
+        $stmt->execute();
+        return $stmt->affected_rows > 0;
+    }
+
+    public function actualizarOpcion($id_opcion, $texto_opcion)
+    {
+        $query = "UPDATE opciones SET texto_opcion = ? WHERE id_opcion = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param('si', $texto_opcion, $id_opcion);
+        $stmt->execute();
+        return $stmt->affected_rows > 0;
+    }
+
+
     //Funciones para consultar las encuestas y meterlas en cards para el feed y el home
 
     public function obtenerEncuestas($id_usuario)
@@ -159,20 +189,40 @@ class EncuestaModel
         return $encuestas;
     }
 
-    public function obtenerEncuestasActivas()
+    public function obtenerEncuestasActivas($soloActivas = false, $id_usuario = null)
     {
         $query = "SELECT e.*, u.nombre_usuario 
-                  FROM Encuestas e 
-                  JOIN Usuarios u ON e.id_usuario = u.id_usuario 
-                  WHERE e.estado = 'activa'";
-        // Resto de la implementación
+              FROM Encuestas e
+              JOIN Usuarios u ON e.id_usuario = u.id_usuario";
 
-        $result = $this->conn->query($query);
-
-        $encuestas = [];
-        while ($row = $result->fetch_assoc()) {
-            $encuestas[] = $row;
+        $conditions = [];
+        if ($soloActivas) {
+            $conditions[] = "e.estado = 'activa'";
         }
+
+        if ($id_usuario !== null) {
+            $conditions[] = "e.id_usuario = ?";
+        }
+
+        if (!empty($conditions)) {
+            $query .= " WHERE " . implode(" AND ", $conditions);
+        }
+
+        $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            die('Error en la preparación de la consulta: ' . $this->conn->error);
+        }
+
+        if ($id_usuario !== null) {
+            $stmt->bind_param("i", $id_usuario);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $encuestas = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
 
         return $encuestas;
     }
@@ -245,25 +295,27 @@ class EncuestaModel
 
     //Funciones para registrar los votos y usarlos en las estadisticas
 
-    public function obtenerEncuestaPorId($id_encuesta, $id_usuario)
+    public function obtenerEncuestaPorId($id_encuesta, $id_usuario = null)
     {
-        // Aquí va la lógica para obtener la encuesta por id
-        $query = "SELECT * FROM Encuestas WHERE id_encuesta = ? AND id_usuario = ?";
+        $query = "SELECT e.*, u.nombre_usuario, u.id_usuario
+              FROM Encuestas e
+              JOIN Usuarios u ON e.id_usuario = u.id_usuario
+              WHERE e.id_encuesta = ?";
+
         $stmt = $this->conn->prepare($query);
-
-        if ($stmt === false) {
-            die('Error en la preparación de la consulta: ' . $this->conn->error);
-        }
-
-        $stmt->bind_param("ii", $id_encuesta, $id_usuario);
+        $stmt->bind_param("i", $id_encuesta);
         $stmt->execute();
         $result = $stmt->get_result();
 
-        if ($result->num_rows > 0) {
-            return $result->fetch_assoc(); // Encuentra y retorna la encuesta
-        } else {
-            return null; // Si no se encuentra la encuesta
+        $encuesta = $result->fetch_assoc();
+        $stmt->close();
+
+        // Si no se encuentra la encuesta, devolver null o lanzar un error
+        if (!$encuesta) {
+            return null;
         }
+
+        return $encuesta;
     }
 
 
@@ -447,5 +499,162 @@ class EncuestaModel
         }
 
         return $opcionesYVotos; // Retorna todas las opciones y votos
+    }
+
+    // Funcion para generar token para compartir
+
+    public function generarTokenEncuesta($id_encuesta)
+    {
+        // Generar token corto (8 caracteres al azar)
+        $token = substr(bin2hex(random_bytes(4)), 0, 8);
+
+        // Insertar token en la tabla de encuestas
+        $query = "UPDATE encuestas SET token = ? WHERE id_encuesta = ?";
+        $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            die('Error en la preparación de la consulta: ' . $this->conn->error);
+        }
+
+        $stmt->bind_param("si", $token, $id_encuesta);
+        if ($stmt->execute()) {
+            return $token;
+        }
+        return false;
+    }
+
+    public function obtenerEncuesta($token)
+    {
+        $query = "SELECT * FROM encuestas WHERE token = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("s", $token); // Usamos "s" ya que el token es una cadena
+        $stmt->execute();
+        $result = $stmt->get_result();
+        if ($result->num_rows > 0) {
+            return $result->fetch_assoc();
+        } else {
+            return false; // No se encontró la encuesta
+        }
+    }
+
+    public function actualizarToken($id_encuesta, $token)
+    {
+        $query = "UPDATE encuestas SET token = ? WHERE id_encuesta = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("si", $token, $id_encuesta); // "s" para cadena y "i" para entero
+        return $stmt->execute();
+    }
+
+    public function obtenerDatosEncuesta($id_encuesta)
+    {
+        $query = "
+            SELECT 
+                p.texto_pregunta AS pregunta,
+                o.texto_opcion AS opcion,
+                COUNT(v.id_voto) AS votos
+            FROM preguntas p
+            LEFT JOIN opciones o ON p.id_pregunta = o.id_pregunta
+            LEFT JOIN votos v ON o.id_opcion = v.id_opcion AND v.tipo_opcion = 'encuesta'
+            WHERE p.id_encuesta = ?
+            GROUP BY p.id_pregunta, o.id_opcion
+            ORDER BY p.id_pregunta;
+        ";
+
+        $stmt = $this->conn->prepare($query);
+        if (!$stmt) {
+            die("Error preparando la consulta SQL: " . $this->conn->error);
+        }
+
+        $stmt->bind_param('i', $id_encuesta); // 'i' para entero
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if (!$result) {
+            die("Error ejecutando la consulta: " . $stmt->error);
+        }
+
+        return $result->fetch_all(MYSQLI_ASSOC);
+    }
+
+    public function obtenerDatosParaGraficas($id_encuesta)
+    {
+        $preguntas = $this->obtenerPreguntasPorEncuesta($id_encuesta);
+        $datosParaGraficas = [];
+
+        foreach ($preguntas as $pregunta) {
+            if ($pregunta['tipo_pregunta'] === 'multiple_choice') {
+                $opcionesYVotos = $this->obtenerOpcionesYVotos($pregunta['id_pregunta']);
+                $datosParaGraficas[] = [
+                    'pregunta' => $pregunta['texto_pregunta'],
+                    'opcionesYVotos' => $opcionesYVotos
+                ];
+            }
+        }
+
+        return $datosParaGraficas;
+    }
+
+    public function generarGraficasPreguntasMultiples($id_encuesta)
+    {
+        $preguntas = $this->obtenerPreguntasPorEncuesta($id_encuesta);
+        $graficas = [];
+
+        foreach ($preguntas as $pregunta) {
+            // Solo procesamos preguntas de opción múltiple
+            if ($pregunta['tipo_pregunta'] === 'multiple_choice') {
+                $resultados = $this->obtenerResultadosPregunta($pregunta['id_pregunta']);
+
+                // Preparar datos para la gráfica
+                $labels = [];
+                $votos = [];
+                $colores = $this->generarColoresAleatorios(count($resultados));
+
+                foreach ($resultados as $resultado) {
+                    $labels[] = $resultado['texto_opcion'];
+                    $votos[] = $resultado['votos'];
+                }
+
+                $graficas[] = [
+                    'pregunta' => $pregunta['texto_pregunta'],
+                    'labels' => $labels,
+                    'votos' => $votos,
+                    'colores' => $colores
+                ];
+            }
+        }
+
+        return $graficas;
+    }
+
+    private function generarColoresAleatorios($cantidad)
+    {
+        $colores = [];
+        $paletaBase = [
+            'rgba(54, 162, 235, 0.7)',   // Azul
+            'rgba(155, 197, 61, 0.7)',   // 9BC53D - Verde
+            'rgba(255, 99, 132, 0.7)',   // Rojo
+            'rgba(91, 192, 235, 0.7)',   // 5BC0EB - Azul claro
+            'rgba(75, 192, 192, 0.7)',   // Verde aguamarina 
+            'rgba(255, 206, 86, 0.7)',   // Amarillo
+            'rgba(153, 102, 255, 0.7)',  // Morado
+            'rgba(255, 159, 64, 0.7)',   // Naranja
+            'rgba(253, 231, 76, 0.7)',   // FDE74C - Amarillo
+            'rgba(195, 66, 63, 0.7)',
+        ];
+
+        for ($i = 0; $i < $cantidad; $i++) {
+            $colores[] = $paletaBase[$i % count($paletaBase)];
+        }
+
+        return $colores;
+    }
+
+    public function obtenerTodasLasEncuestas()
+    {
+        $query = "SELECT * FROM Encuestas";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
 }

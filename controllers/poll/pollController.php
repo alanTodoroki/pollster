@@ -35,13 +35,29 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $id_encuesta = $_POST['id_encuesta'];
             $titulo = $_POST['titulo'];
             $descripcion = $_POST['descripcion'];
-            $fecha_inicio = $_POST['fecha_inicio'];
-            $fecha_fin = $_POST['fecha_fin'];
-            $estado = $_POST['estado'];
+            $preguntas = $_POST['preguntas'];
+            $opciones = $_POST['opciones'];
 
-            $resultado = actualizarEncuesta($db, $id_encuesta, $titulo, $descripcion, $fecha_inicio, $fecha_fin, $estado);
-            echo $resultado;
-            break;
+            // Actualizar la encuesta
+            $updateEncuestaQuery = $db->prepare("UPDATE encuestas SET titulo = ?, descripcion = ? WHERE id_encuesta = ?");
+            $updateEncuestaQuery->bind_param("ssi", $titulo, $descripcion, $id_encuesta);
+            $updateEncuestaQuery->execute();
+
+            // Actualizar las preguntas
+            foreach ($preguntas as $id_pregunta => $texto_pregunta) {
+                $updatePreguntaQuery = $db->prepare("UPDATE preguntas_encuesta SET texto_pregunta = ? WHERE id_pregunta = ?");
+                $updatePreguntaQuery->bind_param("si", $texto_pregunta, $id_pregunta);
+                $updatePreguntaQuery->execute();
+            }
+
+            // Actualizar las opciones
+            foreach ($opciones as $id_opcion => $texto_opcion) {
+                $updateOpcionQuery = $db->prepare("UPDATE opciones_encuesta SET texto_opcion = ? WHERE id_opcion = ?");
+                $updateOpcionQuery->bind_param("si", $texto_opcion, $id_opcion);
+                $updateOpcionQuery->execute();
+            }
+
+            header("Location: ../../views/polls/seePoll.php?id=$id_encuesta");
 
         case 'responderEncuesta':
             $id_encuesta = $_POST['id_encuesta'];

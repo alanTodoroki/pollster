@@ -15,7 +15,10 @@ if (!$id_votacion || !$id_usuario) {
     die('ID de votación o usuario no especificado.');
 }
 
-$votacion = $model->obtenerVotacionPorId($id_votacion, $id_usuario);
+$votacion = $model->obtenerVotacionPorId($id_votacion);
+if (!$votacion) {
+    die('La votación no existe.');
+}
 $opciones = $model->obtenerOpcionesPorVotacion($id_votacion);
 ?>
 

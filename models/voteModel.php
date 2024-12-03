@@ -138,35 +138,66 @@ class VotacionModel
         return $votaciones;
     }
 
-    public function obtenerVotacionesActivas()
+    public function obtenerVotacionesActivas($soloActivas = false, $id_usuario = null)
     {
-        $query = "SELECT e.*, u.nombre_usuario 
-                  FROM Votaciones e 
-                  JOIN Usuarios u ON e.id_usuario = u.id_usuario 
-                  WHERE e.estado = 'activa'";
-        // Resto de la implementación
+        $query = "SELECT v.*, u.nombre_usuario 
+              FROM Votaciones v
+              JOIN Usuarios u ON v.id_usuario = u.id_usuario";
 
-        $result = $this->conn->query($query);
-
-        $votaciones = [];
-        while ($row = $result->fetch_assoc()) {
-            $votaciones[] = $row;
+        $conditions = [];
+        if ($soloActivas) {
+            $conditions[] = "v.estado = 'activa'";
         }
+
+        if ($id_usuario !== null) {
+            $conditions[] = "v.id_usuario = ?";
+        }
+
+        if (!empty($conditions)) {
+            $query .= " WHERE " . implode(" AND ", $conditions);
+        }
+
+        $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            die('Error en la preparación de la consulta: ' . $this->conn->error);
+        }
+
+        if ($id_usuario !== null) {
+            $stmt->bind_param("i", $id_usuario);
+        }
+
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $votaciones = $result->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
 
         return $votaciones;
     }
 
     //Funciones para registrar los votos y usarlos en las estadisticas
 
-    public function obtenerVotacionPorId($id_votacion, $id_usuario)
+    public function obtenerVotacionPorId($id_votacion, $id_usuario = null)
     {
-        $query = "SELECT * FROM Votaciones WHERE id_votacion = ? AND id_usuario = ?";
+        $query = "SELECT v.*, u.nombre_usuario, u.id_usuario
+              FROM Votaciones v
+              JOIN Usuarios u ON v.id_usuario = u.id_usuario
+              WHERE v.id_votacion = ?";
+
         $stmt = $this->conn->prepare($query);
-        $stmt->bind_param("ii", $id_votacion, $id_usuario); // "ii" indica dos enteros
+        $stmt->bind_param("i", $id_votacion);
         $stmt->execute();
         $result = $stmt->get_result();
+
         $votacion = $result->fetch_assoc();
         $stmt->close();
+
+        // Si no se encuentra la votación, devolver null o lanzar un error
+        if (!$votacion) {
+            return null;
+        }
+
         return $votacion;
     }
 
@@ -233,5 +264,62 @@ class VotacionModel
         }
 
         return $resultados;
+    }
+
+    // Funcion para generar token para compartir
+
+    public function generarTokenVotacion($id_votacion)
+    {
+        // Generar token corto (8 caracteres al azar)
+        $token = substr(bin2hex(random_bytes(4)), 0, 8);
+
+        // Insertar token en la tabla de votaciones
+        $query = "UPDATE votaciones SET token = ? WHERE id_votacion = ?";
+        $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            die('Error en la preparación de la consulta: ' . $this->conn->error);
+        }
+
+        $stmt->bind_param("si", $token, $id_votacion);
+        if ($stmt->execute()) {
+            return $token;
+        }
+        return false;
+    }
+
+    public function obtenerVotacion($id_votacion)
+    {
+        $query = "SELECT * FROM votaciones WHERE id_votacion = ?";
+        $stmt = $this->conn->prepare($query);
+        $stmt->bind_param("i", $id_votacion); // "i" indica que es un entero
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $votacion = $result->fetch_assoc();
+        $stmt->close();
+
+        return $votacion ? $votacion : false; // Devuelve false si no se encuentra la votación
+    }
+    public function actualizarToken($id_votacion, $token)
+    {
+        $query = "UPDATE votaciones SET token = ? WHERE id_votacion = ?";
+        $stmt = $this->conn->prepare($query);
+
+        if ($stmt === false) {
+            die('Error en la preparación de la consulta: ' . $this->conn->error);
+        }
+
+        $stmt->bind_param("si", $token, $id_votacion); // "si" indica que el primer parámetro es un string (token) y el segundo es un entero (id_votacion)
+        $stmt->execute();
+        $stmt->close();
+    }
+
+    public function obtenerTodasLasVotaciones()
+    {
+        $query = "SELECT * FROM Votaciones";
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        return $result->fetch_all(MYSQLI_ASSOC);
     }
 }

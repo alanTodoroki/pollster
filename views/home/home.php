@@ -9,19 +9,27 @@ session_start();
 $database = new Database();
 $db = $database->getConnection();
 
-// Verificar si hay una sesión activa
+// Obtener usuario logueado
 $usuario = null;
 if (isset($_SESSION['id_usuario'])) {
     $usuarioModel = new UsuarioModel($db);
     $usuario = $usuarioModel->obtenerUsuario($_SESSION['id_usuario']);
 }
 
+// Verificar si el usuario está logueado
+$id_usuario = $_SESSION['id_usuario'] ?? null;
+if (!$id_usuario) {
+    die('El usuario no está logueado.');
+}
+
 $encuestaModel = new EncuestaModel($db);
 $votacionModel = new VotacionModel($db);
 
 // Obtener todas las encuestas y votaciones activas de todos los usuarios
-$encuestas = $encuestaModel->obtenerEncuestasActivas();
-$votaciones = $votacionModel->obtenerVotacionesActivas();
+
+// Obtener todas las encuestas y votaciones activas
+$encuestas = $encuestaModel->obtenerEncuestasActivas(true);
+$votaciones = $votacionModel->obtenerVotacionesActivas(true);
 ?>
 
 <!DOCTYPE html>
@@ -95,8 +103,6 @@ $votaciones = $votacionModel->obtenerVotacionesActivas();
             <div class="text-center mb-4">
                 <img src="../../public/img/logo.png" alt="Logo" class="profile-pic-large">
                 <h1 class="text-dark fw-bold">Pollster</h1>
-
-
             </div>
         <?php endif; ?>
 
@@ -116,13 +122,13 @@ $votaciones = $votacionModel->obtenerVotacionesActivas();
                                     </div>
                                 </div>
                                 <div>
-                                    <a href="#" class="btn btn-sm btn-outline-secondary"><i class="bi bi-share"></i></a>
+                                    <a href="sharePoll.php?id=<?= $encuesta['id_encuesta'] ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-share"></i> Compartir</a>
                                 </div>
                             </div>
                             <div class="card-body text-center">
                                 <h5 class="card-title mb-3"><?= $encuesta['titulo'] ?></h5>
                                 <p class="card-text"><?= $encuesta['descripcion'] ?></p>
-                                <a href="participar_encuesta.php?id=<?= $encuesta['id_encuesta'] ?>" class="btn btn-light mt-3">Participar</a>
+                                <a href="../polls/participatePoll.php?id=<?= $encuesta['id_encuesta'] ?>" class="btn btn-light mt-3">Participar</a>
                             </div>
                         </div>
                     </div>
@@ -145,13 +151,13 @@ $votaciones = $votacionModel->obtenerVotacionesActivas();
                                     </div>
                                 </div>
                                 <div>
-                                    <a href="#" class="btn btn-sm btn-outline-secondary"><i class="bi bi-share"></i></a>
+                                    <a href="shareVote.php?id=<?= $votacion['id_votacion'] ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-share"></i> Compartir</a>
                                 </div>
                             </div>
                             <div class="card-body text-center">
                                 <h5 class="card-title mb-3"><?= $votacion['titulo'] ?></h5>
                                 <p class="card-text"><?= $votacion['descripcion'] ?></p>
-                                <a href="participar_votacion.php?id=<?= $votacion['id_votacion'] ?>" class="btn btn-light mt-3">Participar</a>
+                                <a href="../votes/participateVote.php?id=<?= $votacion['id_votacion'] ?>" class="btn btn-light mt-3">Participar</a>
                             </div>
                         </div>
                     </div>

@@ -1,8 +1,6 @@
 <?php
 require_once '../../models/userModel.php';
 
-$database = new Database();
-$db = $database->getConnection();
 class LoginController
 {
     private $usuarioModel;
@@ -23,9 +21,9 @@ class LoginController
             $_SESSION['rol'] = $usuario['rol'];
 
             if ($usuario['rol'] === 'administrador') {
-                header("Location: ../admin/dashboard.php");
+                header("Location: ../../views/admin/dashboard.php");
             } else {
-                header("Location: ../feed/feedUser.php");
+                header("Location: ../../views/feed/feedUser.php");
             }
             exit();
         }

@@ -3,25 +3,21 @@ session_start();
 require_once '../../config/db.php';
 require_once '../../controllers/auth/loginController.php';
 
-$db = new Database();
+$database = new Database();
 $db = $database->getConnection();
 $loginController = new LoginController($db);
 
-// Removemos la verificación de sesión inicial para permitir otros logins
 $message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Verifica si los campos están completos
     if (empty($_POST['correo_electronico']) || empty($_POST['contrasenia'])) {
         $message = 'Por favor, llena todos los campos.';
     } else {
-        // Envía los datos al controlador para su procesamiento
         $correo_o_usuario = $_POST['correo_electronico'];
         $contrasenia = $_POST['contrasenia'];
         $message = $loginController->login($correo_o_usuario, $contrasenia);
     }
 }
-
 ?>
 <!DOCTYPE html>
 <html lang="es">
@@ -50,7 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 100%;
             max-width: 400px;
             background: none;
-            /* Elimina cualquier fondo */
             box-sizing: border-box;
             border-radius: 8px;
         }
@@ -59,7 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-size: 24px;
             margin-bottom: 20px;
             color: black;
-            /* Color de texto blanco */
         }
 
         input[type="text"],
@@ -114,13 +108,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-decoration: underline;
         }
 
-        /* Contenedor del logo y el título */
         .logo-title-wrapper {
             text-align: center;
             margin-bottom: 20px;
         }
 
-        /* Estilo del logo grande */
         .logo-large {
             width: 80px;
             height: 80px;
@@ -128,7 +120,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             object-fit: contain;
         }
 
-        /* Estilo del título Pollster */
         .pollster-title {
             font-size: 24px;
             font-weight: bold;
@@ -149,7 +140,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p style="color: red;"><?= htmlspecialchars($message) ?></p>
         <?php endif; ?>
         <form action="../users/login.php" method="POST">
-            <input name="correo_electronico" type="text" placeholder="Correo electrónico o nombre de usuario" required autocomplete="off" value="" ?>
+            <input name="correo_electronico" type="text" placeholder="Correo electrónico o nombre de usuario" required autocomplete="off" value="">
             <input name="contrasenia" type="password" placeholder="Contraseña" required>
             <div class="checkbox-container">
                 <input type="checkbox" id="show-password">
