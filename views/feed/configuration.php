@@ -1,190 +1,202 @@
 <?php
 session_start();
-require_once '../../config/db.php';
-require_once '../../models/configurationModel.php';
-require_once '../../controllers/configuration/configurationController.php';
+include '../../config/db.php'; // Archivo de conexión a la base de datos
+include '../../models/userModel.php'; // Asegúrate de que esta ruta sea correcta
 
-// Verificar autenticación
+// Verificar si el usuario está logueado
 if (!isset($_SESSION['id_usuario'])) {
-    header('Location: ../login.php');
+    header('Location: login.php');
     exit();
 }
 
-// Crear instancias
 $database = new Database();
-$configuracionModel = new ConfiguracionModel($db);
-$configuracionController = new ConfiguracionController();
+$db = $database->getConnection();
+$userModel = new UsuarioModel($db);
 
-// Obtener datos del usuario
-$usuario = $configuracionModel->obtenerConfiguracion($_SESSION['id_usuario']);
+$id_usuario = $_SESSION['id_usuario'];
 
-// Manejar mensajes de estado
-$mensaje = isset($_GET['mensaje']) ? urldecode($_GET['mensaje']) : null;
-$tipo_mensaje = isset($_GET['tipo']) ? $_GET['tipo'] : null;
+// Obtener información actual del usuario
+$consulta = $db->prepare("SELECT * FROM usuarios WHERE id_usuario = ?");
+$consulta->bind_param("i", $id_usuario);
+$consulta->execute();
+$resultado = $consulta->get_result();
+$usuario = $resultado->fetch_assoc();
+
+// Procesar actualización de perfil
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $nombre = $_POST['nombre'];
+    $apellido = $_POST['apellido'];
+    $nombre_usuario = $_POST['nombre_usuario'];
+
+    // Manejar la foto de perfil
+    if (isset($_FILES['foto_perfil']) && $_FILES['foto_perfil']['error'] == 0) {
+        $carpeta_fotos = 'profilePhoto/';
+
+        // Crear carpeta si no existe
+        if (!file_exists($carpeta_fotos)) {
+            mkdir($carpeta_fotos, 0777, true);
+        }
+
+        // Generar nombre único para la foto
+        $nombre_archivo = $id_usuario . '_' . time() . '_' . $_FILES['foto_perfil']['name'];
+        $ruta_completa = $carpeta_fotos . $nombre_archivo;
+
+        // Subir archivo
+        if (move_uploaded_file($_FILES['foto_perfil']['tmp_name'], $ruta_completa)) {
+            // Actualizar ruta de foto en base de datos
+            $actualizar_foto = $db->prepare("UPDATE usuarios SET foto_perfil = ? WHERE id_usuario = ?");
+            $actualizar_foto->bind_param("si", $ruta_completa, $id_usuario);
+            $actualizar_foto->execute();
+        }
+    }
+
+    // Actualizar información del usuario
+    $actualizar = $db->prepare("UPDATE usuarios SET nombre = ?, apellido = ?, nombre_usuario = ? WHERE id_usuario = ?");
+    $actualizar->bind_param("sssi", $nombre, $apellido, $nombre_usuario, $id_usuario);
+
+    if ($actualizar->execute()) {
+        $mensaje = "Perfil actualizado exitosamente";
+        // Recargar información del usuario
+        $consulta = $db->prepare("SELECT * FROM usuarios WHERE id_usuario = ?");
+        $consulta->bind_param("i", $id_usuario);
+        $consulta->execute();
+        $resultado = $consulta->get_result();
+        $usuario = $resultado->fetch_assoc();
+    } else {
+        $error = "Error al actualizar el perfil";
+    }
+}
+
 ?>
-
 <!DOCTYPE html>
 <html lang="es">
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Configuración de Perfil</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
-        /* Estilos previos mantenidos */
-        .error-input {
-            border-color: red;
+        body {
+            background-color: #f7f9fb;
+            font-family: 'Arial', sans-serif;
+        }
+
+        .form-container {
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            margin-top: 60px;
+        }
+
+        .perfil-foto {
+            max-width: 150px;
+            max-height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid #006E90;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            color: #006E90;
+            font-weight: 700;
+        }
+
+        .btn-primary {
+            background-color: #006E90;
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background-color: #005377;
+        }
+
+        .btn-secondary {
+            background-color: #dee2e6;
+            color: #495057;
+            border: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: #ced4da;
+        }
+
+        .form-label {
+            font-weight: 600;
+            color: #495057;
+        }
+
+        input.form-control {
+            border: 1px solid #ced4da;
+        }
+
+        input.form-control:focus {
+            border-color: #006E90;
+            box-shadow: 0 0 0 0.2rem rgba(0, 110, 144, 0.25);
         }
     </style>
 </head>
 
 <body>
-    <div class="container mt-5">
-        <!-- Mostrar mensajes de estado -->
-        <?php if ($mensaje): ?>
-            <div class="alert alert-<?= $tipo_mensaje == 'error' ? 'danger' : 'success' ?> alert-dismissible fade show" role="alert">
-                <?= htmlspecialchars($mensaje) ?>
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            </div>
-        <?php endif; ?>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="form-container">
+                    <h1 class="text-center mb-4">Configuración de Perfil</h1>
 
-        <div class="row">
-            <div class="col-md-4">
-                <!-- Tarjeta de Perfil (código anterior mantenido) -->
-                <div class="card mb-4">
-                    <div class="card-body text-center">
-                        <h5 class="card-title mt-3">
-                            <?= htmlspecialchars($usuario['nombre']) ?>
-                        </h5>
-                        <p class="card-text text-muted">
-                            <?= htmlspecialchars($usuario['correo_electronico']) ?>
-                        </p>
-                    </div>
-                </div>
-            </div>
+                    <?php
+                    if (isset($mensaje)) {
+                        echo "<div class='alert alert-success'>$mensaje</div>";
+                    }
+                    if (isset($error)) {
+                        echo "<div class='alert alert-danger'>$error</div>";
+                    }
+                    ?>
 
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">Configuración de Perfil</div>
-                    <div class="card-body">
-                        <form id="formulario-configuracion" novalidate>
-                            <!-- Campos de información personal -->
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label for="nombre" class="form-label">Nombre</label>
-                                    <input type="text"
-                                        class="form-control"
-                                        id="nombre"
-                                        name="nombre"
-                                        value="<?= htmlspecialchars($usuario['nombre']) ?>"
-                                        required>
-                                    <div class="invalid-feedback">
-                                        Por favor ingrese su nombre.
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="nombre_usuario" class="form-label">Nombre de Usuario</label>
-                                    <input type="text"
-                                        class="form-control"
-                                        id="nombre_usuario"
-                                        name="nombre_usuario"
-                                        value="<?= htmlspecialchars($usuario['nombre_usuario']) ?>"
-                                        required>
-                                    <div class="invalid-feedback">
-                                        Por favor ingrese un nombre de usuario.
-                                    </div>
-                                </div>
-                            </div>
+                    <form action="" method="POST" enctype="multipart/form-data">
+                        <div class="text-center mb-4">
+                            <?php if (!empty($usuario['foto_perfil'])): ?>
+                                <img src="<?php echo htmlspecialchars($usuario['foto_perfil']); ?>" alt="Foto de Perfil" class="perfil-foto">
+                            <?php else: ?>
+                                <img src="default-profile.png" alt="Foto de Perfil" class="perfil-foto">
+                            <?php endif; ?>
 
                             <div class="mb-3">
-                                <label for="correo" class="form-label">Correo Electrónico</label>
-                                <input type="email"
-                                    class="form-control"
-                                    id="correo"
-                                    name="correo"
-                                    value="<?= htmlspecialchars($usuario['correo_electronico']) ?>"
-                                    required>
-                                <div class="invalid-feedback">
-                                    Por favor ingrese un correo electrónico válido.
-                                </div>
+                                <label for="foto_perfil" class="form-label">Cambiar Foto de Perfil</label>
+                                <input type="file" class="form-control" name="foto_perfil" id="foto_perfil" accept="image/jpeg,image/png,image/gif">
                             </div>
+                        </div>
 
-                            <!-- Sección de cambio de contraseña -->
-                            <div class="card mt-4">
-                                <div class="card-header">Cambiar Contraseña</div>
-                                <div class="card-body">
-                                    <div class="mb-3">
-                                        <label for="contrasenia_actual" class="form-label">Contraseña Actual</label>
-                                        <input type="password"
-                                            class="form-control"
-                                            id="contrasenia_actual"
-                                            name="contrasenia_actual">
-                                    </div>
-                                    <div class="row">
-                                        <div class="col-md-6 mb-3">
-                                            <label for="nueva_contrasenia" class="form-label">Nueva Contraseña</label>
-                                            <input type="password"
-                                                class="form-control"
-                                                id="nueva_contrasenia"
-                                                name="nueva_contrasenia"
-                                                minlength="8">
-                                            <div class="form-text">
-                                                Mínimo 8 caracteres
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label for="confirmar_contrasenia" class="form-label">Confirmar Nueva Contraseña</label>
-                                            <input type="password"
-                                                class="form-control"
-                                                id="confirmar_contrasenia"
-                                                name="confirmar_contrasenia"
-                                                minlength="8">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                        <div class="mb-3">
+                            <label for="nombre" class="form-label">Nombre</label>
+                            <input type="text" class="form-control" name="nombre" id="nombre"
+                                value="<?php echo htmlspecialchars($usuario['nombre']); ?>" required>
+                        </div>
 
-                            <div class="mt-4">
-                                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
-                            </div>
-                        </form>
-                    </div>
+                        <div class="mb-3">
+                            <label for="apellido" class="form-label">Apellido</label>
+                            <input type="text" class="form-control" name="apellido" id="apellido"
+                                value="<?php echo htmlspecialchars($usuario['apellido']); ?>" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="nombre_usuario" class="form-label">Nombre de Usuario</label>
+                            <input type="text" class="form-control" name="nombre_usuario" id="nombre_usuario"
+                                value="<?php echo htmlspecialchars($usuario['nombre_usuario']); ?>" required>
+                        </div>
+
+                        <div class="d-flex justify-content-between">
+                            <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                            <a href="../feed/feedUser.php" class="btn btn-secondary">Inicio</a>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist /js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const formulario = document.getElementById('formulario-configuracion');
-
-            // Manejar el envío del formulario
-            formulario.addEventListener('submit', function(event) {
-                event.preventDefault();
-                if (formulario.checkValidity() === false) {
-                    event.stopPropagation();
-                } else {
-                    const formData = new FormData(formulario);
-                    fetch('../../controllers/configuration/configurationController.php', {
-                            method: 'POST',
-                            body: formData
-                        })
-                        .then(response => response.json())
-                        .then(data => {
-                            const mensaje = encodeURIComponent(data.message);
-                            const tipo = data.success ? 'success' : 'error';
-                            window.location.href = `?mensaje=${mensaje}&tipo=${tipo}`;
-                        })
-                        .catch(error => {
-                            console.error('Error:', error);
-                        });
-                }
-                formulario.classList.add('was-validated');
-            });
-        });
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>

@@ -102,8 +102,8 @@ foreach ($respuestas as $respuesta) {
                     <button class="btn btn-custom me-2" onclick="goBack()">
                         <i class="fas fa-arrow-left"></i>
                     </button>
-                    <button class="btn btn-custom me-2" onclick="exportToPDF()">
-                        <i class="fa-solid fa-file-pdf"></i>
+                    <button class="btn btn-custom me-2" onclick="window.location.href='reportPoll.php?id=<?php echo $id_encuesta; ?>'">
+                        <i class="fas fa-file-alt"></i>
                     </button>
                     <button class="btn btn-custom me-2" onclick="window.location.href='exportPoll.php?id=<?php echo $id_encuesta; ?>'">
                         <i class="fas fa-file-export"></i>

@@ -33,12 +33,16 @@ $output = fopen('php://output', 'w');
 
 // Si quieres añadir el BOM (opcional, para Excel):
 fwrite($output, "\xEF\xBB\xBF"); // Esto fuerza UTF-8 en Excel
-fputcsv($output, ['Pregunta', 'Respuesta', 'Votos']);
+fputcsv($output, ['Pregunta', 'Respuesta', 'Votos', 'Porcentaje']);
 
 foreach ($respuestasPorPregunta as $pregunta => $respuestas) {
     $conteoRespuestas = array_count_values($respuestas);
+    $totalRespuestas = count($respuestas); // Total de respuestas para la pregunta
+
     foreach ($conteoRespuestas as $respuesta => $votos) {
-        fputcsv($output, [$pregunta, $respuesta, $votos]);
+        // Calcular el porcentaje
+        $porcentaje = ($totalRespuestas > 0) ? round(($votos / $totalRespuestas) * 100, 1) : 0;
+        fputcsv($output, [$pregunta, $respuesta, $votos, $porcentaje . '%']);
     }
 }
 

@@ -143,6 +143,154 @@ $votaciones = $votacionModel->obtenerVotaciones($_SESSION['id_usuario']);
             color: #555;
             margin-top: 10px;
         }
+
+
+        :root {
+            --primary-color: #2C5F2D;
+            /* Deep green */
+            --secondary-color: #608C50;
+            /* Softer green */
+            --accent-color: #A8C0CC;
+            /* Soft blue-gray */
+            --text-dark: #333;
+            --text-light: #666;
+            --background-light: #F4F6F7;
+        }
+
+        body {
+            background-color: var(--background-light);
+            font-family: 'Inter', 'Roboto', sans-serif;
+            color: var(--text-dark);
+        }
+
+        .container {
+            max-width: 1200px;
+            padding: 2rem;
+        }
+
+        /* User Profile Section */
+        .profile-section {
+            background-color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .profile-pic-large {
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 4px solid var(--secondary-color);
+            transition: transform 0.3s ease;
+        }
+
+        .profile-pic-large:hover {
+            transform: scale(1.05);
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-weight: 700;
+            margin-top: 1rem;
+        }
+
+        h2 {
+            color: var(--text-light);
+            font-weight: 400;
+        }
+
+        /* Card Styles */
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.12);
+        }
+
+        .card-header {
+            background-color: white;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 1rem;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+        }
+
+        .card-encuestas {
+            border-top: 4px solid #F18F01;
+        }
+
+        .card-votaciones {
+            border-top: 4px solid var(--primary-color);
+        }
+
+        .btn-participar {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 0.5rem 1.5rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-participar:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .btn-custom {
+            background-color: var(--secondary-color);
+            color: white;
+            border-radius: 25px;
+            padding: 0.5rem 1.5rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .btn-custom:hover {
+            background-color: var(--primary-color);
+        }
+
+        /* Responsive Adjustments */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .card-container {
+                display: flex;
+                flex-direction: column;
+            }
+        }
+
+        /* Empty State Styles */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        }
+
+        .empty-state img {
+            max-width: 250px;
+            opacity: 0.7;
+        }
+
+        .empty-state p {
+            color: var(--text-light);
+            margin-top: 1rem;
+            text-align: center;
+        }
     </style>
 </head>
 
@@ -153,7 +301,7 @@ $votaciones = $votacionModel->obtenerVotaciones($_SESSION['id_usuario']);
     <div class="container mt-4">
         <!-- User Profile -->
         <div class="text-center mb-4">
-            <img src="../../public/img/avatar.png" alt="Foto de perfil" class="profile-pic-large">
+            <img src="<?= htmlspecialchars($usuario['foto_perfil']) ?>" alt="Foto de perfil" class="profile-pic-large">
             <h1 class="text-dark fw-bold"><?= isset($usuario['nombre']) && isset($usuario['apellido']) ? $usuario['nombre'] . ' ' . $usuario['apellido'] : 'Nombre no disponible' ?></h1>
 
             <div class="d-flex justify-content-center align-items-center mb-2">
@@ -163,7 +311,8 @@ $votaciones = $votacionModel->obtenerVotaciones($_SESSION['id_usuario']);
 
             <p class="text-secondary"><?= $usuario['correo_electronico'] ?></p>
 
-            <button class="btn btn-custom" onclick="redirectToSettings()">Configuración</button>
+            <button class="btn btn-custom" onclick="window.location.href='configuration.php';">Configuración</button>
+
         </div>
 
         <div class="row">
@@ -174,7 +323,7 @@ $votaciones = $votacionModel->obtenerVotaciones($_SESSION['id_usuario']);
                         <div class="card card-encuestas">
                             <div class="card-header d-flex align-items-center justify-content-between">
                                 <div class="d-flex align-items-center">
-                                    <img src="../../public/img/avatar.png" alt="User profile picture" class="rounded-circle me-2 profile-pic-small">
+                                    <img src="<?= htmlspecialchars($usuario['foto_perfil']) ?>" alt="User profile picture" class="rounded-circle me-2 profile-pic-small">
                                     <div>
                                         <div class="fw-bold"><?= $usuario['nombre_usuario'] ?></div>
                                         <small class="text-muted">Encuesta</small>
@@ -206,7 +355,7 @@ $votaciones = $votacionModel->obtenerVotaciones($_SESSION['id_usuario']);
                         <div class="card card-votaciones">
                             <div class="card-header d-flex align-items-center justify-content-between">
                                 <div class="d-flex align-items-center">
-                                    <img src="../../public/img/avatar.png" alt="User profile picture" class="rounded-circle me-2 profile-pic-small">
+                                    <img src="<?= htmlspecialchars($usuario['foto_perfil']) ?>" alt="User profile picture" class="rounded-circle me-2 profile-pic-small">
                                     <div>
                                         <div class="fw-bold"><?= $usuario['nombre_usuario'] ?></div>
                                         <small class="text-muted">Votación</small>

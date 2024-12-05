@@ -206,7 +206,7 @@ $resultados = $votacionModel->obtenerResultadosVotacion($id_votacion);
             // Selecciona el contenedor principal del informe
             const reportElement = document.querySelector('.container');
 
-            // Usa html2canvas para capturar el contenido como imagen
+            // Usa html2canvas para capturar el contenido como imagen 
             html2canvas(reportElement, {
                 scale: 2
             }).then(canvas => {

@@ -21,7 +21,7 @@ $id = isset($_GET['id']) ? intval($_GET['id']) : null;
 if (isset($_GET['action']) && $_GET['action'] === 'delete' && $id) {
     if ($pollModel->eliminarVotacion($id)) {
         $_SESSION['mensaje'] = "Votación eliminada exitosamente";
-        header('Location: managePoll.php');
+        header('Location: manageVote.php');
         exit();
     } else {
         $_SESSION['error'] = "No se pudo eliminar la votación";
@@ -206,9 +206,9 @@ $votaciones = $pollModel->obtenerTodasLasVotaciones();
                                 </td>
                                 <td>
                                     <div class="btn-group" role="group">
-                                        <a href="pollDetails.php?id=<?php echo $votacion['id_votacion']; ?>" class="btn btn-sm btn-info">
+                                        <!--<a href="pollDetails.php?id=<?php echo $votacion['id_votacion']; ?>" class="btn btn-sm btn-info">
                                             <i class="fas fa-eye"></i> Detalles
-                                        </a>
+                                        </a>-->
                                         <a href="?action=delete&id=<?php echo $votacion['id_votacion']; ?>"
                                             class="btn btn-sm btn-danger btn-eliminar"
                                             data-titulo="<?php echo htmlspecialchars($votacion['titulo']); ?>">

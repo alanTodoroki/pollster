@@ -14,7 +14,7 @@ $encuestas = $pollModel->obtenerTodasLasEncuestas();
 if (isset($_GET['eliminar']) && $_GET['eliminar'] == 'true' && isset($_GET['id'])) {
     $id_encuesta = $_GET['id'];
     if ($pollModel->eliminarEncuesta($id_encuesta)) {
-        header("Location: gestionEncuestas.php?mensaje=Encuesta eliminada exitosamente");
+        header('Location: managePoll.php');
         exit();
     } else {
         $error = "No se pudo eliminar la encuesta";

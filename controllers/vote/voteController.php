@@ -52,8 +52,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 }
             }
 
-            // Redirigir después de la actualización
-            header("Location: ../../votes/seeVote.php?id=<?php echo $id_votacion;");
+            header("Location: ../../views/votes/seeVote.php?id=$id_votacion");
             exit;
             break;
 
